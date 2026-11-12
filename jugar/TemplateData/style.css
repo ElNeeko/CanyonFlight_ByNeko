@@ -35,7 +35,6 @@ html, body {
 }
 #bar-fill {
   width: 0; height: 100%; border-radius: 6px; background: var(--accent);
-  transition: width .2s ease;
 }
 #loading-text { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
@@ -46,6 +45,11 @@ html, body {
   background: rgba(0,0,0,.35); color: var(--ink); opacity: .7;
 }
 #fullscreen:hover { opacity: 1; }
+/* En celular arriba a la derecha va la velocidad/altura: el botón baja al centro */
+body.mobile #fullscreen {
+  top: auto; right: auto; left: 50%; transform: translateX(-50%);
+  bottom: 8px; width: 38px; height: 38px; opacity: .45;
+}
 :fullscreen #fullscreen { opacity: .35; }
 
 #rotate {
