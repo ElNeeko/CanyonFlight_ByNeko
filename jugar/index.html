@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1b1410">
+    <title>CanyonFlight</title>
+    <link rel="stylesheet" href="TemplateData/style.css">
+  </head>
+  <body>
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+
+    <div id="loading">
+      <div class="title">CanyonFlight</div>
+      <div class="bar"><div id="bar-fill"></div></div>
+      <div id="loading-text">Cargando… 0%</div>
+    </div>
+
+    <button id="fullscreen" aria-label="Pantalla completa" title="Pantalla completa">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    </button>
+
+    <div id="rotate">
+      <svg viewBox="0 0 64 64" width="72" height="72" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="20" y="8" width="24" height="44" rx="4"/><path d="M52 34a20 20 0 0 1-20 20M12 30A20 20 0 0 1 32 10"/><path d="M48 52l4 2 2-4M16 12l-4-2-2 4"/></svg>
+      <p>Girá el teléfono para jugar</p>
+    </div>
+
+    <div id="error"></div>
+
+    <script>
+      var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+      var canvas = document.querySelector("#unity-canvas");
+      var unity = null;
+      if (isMobile) document.body.classList.add("mobile");
+
+      function showError(msg) {
+        var e = document.querySelector("#error");
+        e.textContent = msg;
+        e.style.display = "block";
+      }
+
+      // Pantalla completa + horizontal (Android). En iPhone Safari no existe la API: el juego igual ocupa toda la ventana.
+      function goFullscreen() {
+        var el = document.documentElement;
+        var req = el.requestFullscreen || el.webkitRequestFullscreen;
+        if (!req || document.fullscreenElement || document.webkitFullscreenElement) return;
+        try {
+          var p = req.call(el, { navigationUI: "hide" });
+          if (p && p.then) p.then(function () {
+            if (screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(function () {});
+          }).catch(function () {});
+        } catch (e) {}
+      }
+      document.querySelector("#fullscreen").addEventListener("click", function () {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        } else goFullscreen();
+      });
+      if (isMobile) document.addEventListener("touchend", goFullscreen, { once: true });
+
+      // Evita zoom, scroll y menú contextual sobre el juego
+      ["gesturestart", "dblclick", "contextmenu"].forEach(function (ev) {
+        document.addEventListener(ev, function (e) { e.preventDefault(); });
+      });
+      document.addEventListener("touchmove", function (e) { e.preventDefault(); }, { passive: false });
+
+      var buildUrl = "Build";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/Web.data.unityweb",
+        frameworkUrl: buildUrl + "/Web.framework.js.unityweb",
+        codeUrl: buildUrl + "/Web.wasm.unityweb",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "CanyonFlight",
+        productVersion: "0.1.0",
+        showBanner: function (msg, type) { if (type === "error") showError(msg); else console.warn(msg); },
+      };
+      // En celulares limitamos la resolución interna: mucho más fluido y casi no se nota.
+      if (isMobile) config.devicePixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+
+      // Texturas: los celulares usan ASTC (las DXT de PC no las soportan y se quedan sin memoria).
+      (function () {
+        try {
+          var gl = document.createElement("canvas").getContext("webgl2");
+          var astc = gl && gl.getExtension("WEBGL_compressed_texture_astc");
+          var dxt = gl && gl.getExtension("WEBGL_compressed_texture_s3tc");
+          if (astc && (!dxt || isMobile)) config.dataUrl = config.dataUrl.replace(".data", "_astc.data");
+        } catch (e) {}
+      })();
+
+      var script = document.createElement("script");
+      script.src = buildUrl + "/Web.loader.js";
+      script.onload = function () {
+        createUnityInstance(canvas, config, function (progress) {
+          var pct = Math.round(progress * 100);
+          document.querySelector("#bar-fill").style.width = pct + "%";
+          document.querySelector("#loading-text").textContent = pct >= 90 ? "Preparando el vuelo…" : "Cargando… " + pct + "%";
+        }).then(function (instance) {
+          unity = instance;
+          document.querySelector("#loading").classList.add("done");
+          canvas.focus();
+        }).catch(function (message) {
+          showError("No se pudo cargar el juego: " + message);
+        });
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>

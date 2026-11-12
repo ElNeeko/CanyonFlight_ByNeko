@@ -1,0 +1,64 @@
+:root {
+  --bg: #1b1410;
+  --ink: #f6ead8;
+  --muted: #b9a58c;
+  --accent: #ff9e2e;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  overflow: hidden; background: var(--bg); color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+  -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+#unity-canvas {
+  position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh;
+  display: block; background: var(--bg); outline: none;
+}
+
+#loading {
+  position: fixed; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 18px;
+  background: radial-gradient(ellipse at 50% 60%, #3a2617 0%, var(--bg) 70%);
+  transition: opacity .5s ease; z-index: 5;
+}
+#loading.done { opacity: 0; pointer-events: none; }
+#loading .title {
+  font-size: clamp(28px, 6vw, 56px); font-weight: 800; letter-spacing: .04em;
+  text-transform: uppercase;
+}
+#loading .bar {
+  width: min(70vw, 420px); height: 10px; border-radius: 6px;
+  background: rgba(255,255,255,.12); overflow: hidden;
+}
+#bar-fill {
+  width: 0; height: 100%; border-radius: 6px; background: var(--accent);
+  transition: width .2s ease;
+}
+#loading-text { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+#fullscreen {
+  position: fixed; top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right));
+  width: 44px; height: 44px; border: 0; border-radius: 10px; z-index: 4;
+  display: grid; place-items: center; cursor: pointer;
+  background: rgba(0,0,0,.35); color: var(--ink); opacity: .7;
+}
+#fullscreen:hover { opacity: 1; }
+:fullscreen #fullscreen { opacity: .35; }
+
+#rotate {
+  position: fixed; inset: 0; z-index: 10; display: none;
+  flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  background: var(--bg); text-align: center; padding: 24px;
+}
+#rotate p { font-size: 20px; font-weight: 600; margin: 0; }
+#rotate svg { color: var(--accent); animation: tilt 2s ease-in-out infinite; }
+@keyframes tilt { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+@media (orientation: portrait) { body.mobile #rotate { display: flex; } }
+
+#error {
+  display: none; position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 20;
+  padding: 12px 14px; border-radius: 10px; background: #8c1d18; color: #fff; font-size: 14px;
+}
